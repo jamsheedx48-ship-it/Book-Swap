@@ -2,8 +2,12 @@ from rest_framework.throttling import AnonRateThrottle
 
 class LoginThrottle(AnonRateThrottle):
     scope="login"
-    rate= '5/min'
 
 class RegisterThrottle(AnonRateThrottle):
     scope="register"
-    rate = "3/min"    
+
+class OTPSendThrottle(AnonRateThrottle):
+    scope = 'otp_send'
+
+class OTPVerifyThrottle(AnonRateThrottle):
+    scope = 'otp_verify'

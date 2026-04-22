@@ -3,6 +3,8 @@ from apps.users.models import User
 from django.contrib.auth.password_validation import validate_password
 import re
 from django.contrib.auth import authenticate
+from django.db import IntegrityError
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     password=serializers.CharField(write_only=True)
@@ -43,7 +45,10 @@ class RegisterSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data): 
         validated_data.pop("confirm_password")
-        return User.objects.create_user(**validated_data) 
+        try:
+            return User.objects.create_user(**validated_data)
+        except IntegrityError:
+            raise serializers.ValidationError({"email": "Email already registered."}) 
     
 
 
@@ -67,6 +72,57 @@ class LoginSerializer(serializers.Serializer):
         
         data["user"]=user
         return data
-        
-        
-    
+
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+class SendOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        return value.strip().lower()
+
+class VerifyOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(min_length=6, max_length=6)
+
+    def validate_email(self, value):
+        return value.strip().lower()
+
+class ResendOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        return value.strip().lower()
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        return value.strip().lower()
+
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(min_length=6, max_length=6)
+    new_password = serializers.CharField(write_only=True)
+
+    def validate_email(self, value):
+        return value.strip().lower()
+
+    def validate_new_password(self, value):
+        validate_password(value)
+        return value    
+
+
+class MFAVerifySetupSerializer(serializers.Serializer):
+    code = serializers.CharField(min_length=6, max_length=6)
+
+class MFALoginVerifySerializer(serializers.Serializer):
+    temp_token = serializers.CharField()
+    code = serializers.CharField(min_length=6, max_length=6)
+
+class MFADisableSerializer(serializers.Serializer):
+    code = serializers.CharField(min_length=6, max_length=6)
+
+class MFAStatusSerializer(serializers.Serializer):
+    mfa_enabled = serializers.BooleanField(read_only=True)

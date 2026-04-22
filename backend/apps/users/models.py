@@ -1,5 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser,BaseUserManager,PermissionsMixin
+from django.utils import timezone
+from datetime import timedelta
+import secrets
+from encrypted_model_fields.fields import EncryptedCharField
 
 # Create your models here.
 
@@ -31,7 +35,11 @@ class User(AbstractBaseUser,PermissionsMixin):
     name=models.CharField(max_length=255)
     is_active=models.BooleanField(default=True)
     is_staff=models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False) 
     created_at = models.DateTimeField(auto_now_add=True)
+    #MFA
+    mfa_enabled=models.BooleanField(default=False)
+    mfa_secret=EncryptedCharField(max_length=255, null=True, blank=True)
 
     objects=UserManager()
 
@@ -40,3 +48,26 @@ class User(AbstractBaseUser,PermissionsMixin):
 
     def __str__(self):
         return self.email
+    
+
+class OTP(models.Model):
+    user=models.ForeignKey(User,on_delete=models.CASCADE,related_name='otps')
+    code=models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used=models.BooleanField(default=False)
+
+    def save(self,*args,**kwargs):
+        if not self.pk:
+            self.expires_at=timezone.now()+timedelta(minutes=5)
+        super().save(*args,**kwargs)
+
+    def is_valid(self):
+        return not self.is_used and timezone.now()<self.expires_at
+    
+    @staticmethod
+    def generate_code():
+        return str(secrets.randbelow(900000)+ 100000)
+    
+    
+
