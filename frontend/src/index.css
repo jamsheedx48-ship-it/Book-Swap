@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+@theme {
+  --color-persian: #26187D;
+  --color-ghost: #F6F7FF;
+}

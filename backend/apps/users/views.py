@@ -147,8 +147,8 @@ class LogoutView(APIView):
             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
         
         response=Response({"message": "Logged out successfully"}, status=status.HTTP_205_RESET_CONTENT)
-        response.delete_cookie('access_token')
-        response.delete_cookie('refresh_token')
+        response.delete_cookie('access_token',samesite='Lax')
+        response.delete_cookie('refresh_token',samesite='Lax')
         return response
 
 

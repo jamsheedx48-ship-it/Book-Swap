@@ -105,13 +105,22 @@ class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
     code = serializers.CharField(min_length=6, max_length=6)
     new_password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
 
     def validate_email(self, value):
         return value.strip().lower()
 
     def validate_new_password(self, value):
         validate_password(value)
-        return value    
+        return value
+    
+    def validate(self, data):
+        if data["new_password"] != data["confirm_password"]:
+            raise serializers.ValidationError({
+                "confirm_password": "Passwords do not match."
+            })
+        return data    
 
 
 class MFAVerifySetupSerializer(serializers.Serializer):
