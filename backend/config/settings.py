@@ -39,6 +39,7 @@ CORS_ALLOW_CREDENTIALS = True
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -55,7 +56,21 @@ INSTALLED_APPS = [
     'encrypted_model_fields',
     'corsheaders',    
     'storages',
+    'apps.chat',
+    'django_celery_results',
+    'django_celery_beat',
 ]
+
+# Channels config
+ASGI_APPLICATION = "config.asgi.application"
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)],  # "redis" = docker service name
+        },
+    },
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -232,7 +247,26 @@ STORAGES = {
     },
     "staticfiles": {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "OPTIONS": {
+            "location":"static"
+        }
     },
 }
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 
+# Celery
+CELERY_BROKER_URL = os.getenv('REDIS_URL')
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
+
+#celery beat
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'purge-trashed-books-daily': {
+        'task': 'apps.books.tasks.purge_trashed_books',
+        'schedule': crontab(hour=2,minute=0)  # every day at 2AM
+    },
+}

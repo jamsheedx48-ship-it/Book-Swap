@@ -491,3 +491,13 @@ class MFAStatusView(APIView):
 
     def get(self, request):
         return Response({"mfa_enabled": request.user.mfa_enabled})
+
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({
+            "id": request.user.id,
+            "name": request.user.name,
+            "email": request.user.email,
+        })

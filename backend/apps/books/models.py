@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
+
 # Create your models here.
 
 class Category(models.Model):
@@ -39,6 +41,19 @@ class Book(models.Model):
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to='books/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    
+    def soft_delete(self):
+        self.deleted_at = timezone.now()
+        self.save(update_fields=['deleted_at'])
+
+    def restore(self):
+        self.deleted_at = None
+        self.save(update_fields=['deleted_at'])
+
+    @property
+    def is_trashed(self):
+        return self.deleted_at is not None
 
     def __str__(self):
         return f"{self.title} by {self.author}"

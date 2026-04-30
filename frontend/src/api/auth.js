@@ -1,7 +1,7 @@
 import axios from "axios"
 
 const API= axios.create({
-    baseURL:"http://localhost:8000/api",
+    baseURL:"http://localhost/api",
     withCredentials:true,
 });
 
@@ -12,4 +12,7 @@ export const resendOTP = (data)=> API.post("/users/resend-otp/",data)
 export const forgotPassword = (data) => API.post("/users/forgot-password/", data);
 export const resetPassword = (data) => API.post("/users/reset-password/", data);
 export const mfaLoginVerify = (data) => API.post("/users/mfa/login-verify/", data);
+export const getMe = () => API.get("/users/me/");
 export const logoutUser = () => API.post("/users/logout/");
+
+export default API;

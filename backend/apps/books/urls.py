@@ -1,8 +1,12 @@
 from django.urls import path
-from .views import BookListCreateAPIView, BookDetailAPIView, CategoryListAPIView
-
+from . import views
 urlpatterns = [
-    path('', BookListCreateAPIView.as_view(), name='book-list-create'),
-    path('<int:pk>/', BookDetailAPIView.as_view(), name='book-detail'),
-    path('categories/', CategoryListAPIView.as_view(), name='category-list'),
+    path('', views.BookListCreateAPIView.as_view(), name='book-list-create'),
+    path('<int:pk>/', views.BookDetailAPIView.as_view(), name='book-detail'),
+    path('categories/', views.CategoryListAPIView.as_view(), name='category-list'),
+    path('trash/', views.BookTrashListAPIView.as_view(), name='book-trash-list'),
+    path('trash/<int:pk>/restore/', views.BookRestoreAPIView.as_view(), name='book-restore'),
+    path('trash/<int:pk>/delete/', views.BookPermanentDeleteAPIView.as_view(), name='book-permanent-delete'),
+
+
 ]

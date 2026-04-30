@@ -6,6 +6,7 @@ from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from .models import Book, Category
 from .serializers import BookSerializer, CategorySerializer
+from .tasks import process_book_image
 # Create your views here.
 
 class BookPagination(PageNumberPagination):
@@ -21,7 +22,7 @@ class BookListCreateAPIView(APIView):
         return [permissions.AllowAny()]
     
     def get(self,request):
-        queryset= Book.objects.select_related('user', 'category').all().order_by('-created_at')
+        queryset= Book.objects.select_related('user', 'category').filter(deleted_at__isnull=True).order_by('-created_at')
 
         # Filter by category
         category= request.query_params.get('category')
@@ -52,11 +53,13 @@ class BookListCreateAPIView(APIView):
     def post(self,request):
         serializer=BookSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=request.user)
+            book=serializer.save(user=request.user)
+            if book.image:
+                process_book_image.delay(book.image.name)
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     
-#Book detail,Edit your listing,Delete your listing
+#Book detail Edit your listing,Delete your listing
 class BookDetailAPIView(APIView):
     def get_permissions(self):
         if self.request.method == 'GET':
@@ -65,7 +68,7 @@ class BookDetailAPIView(APIView):
     
     def get_object(self, pk, request):
         try:
-            book=Book.objects.select_related('user','category').get(pk=pk)
+            book=Book.objects.select_related('user','category').get(pk=pk,deleted_at__isnull=True)
         except Book.DoesNotExist:
             return None,Response(
                 {"error":"Book not found"},
@@ -99,19 +102,57 @@ class BookDetailAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # DELETE book
+    # soft DELETE - move to trash
     def delete(self, request, pk):
         book, error = self.get_object(pk, request)
         if error:
             return error
+        book.soft_delete()
+        return Response(
+            {'message': 'Book moved to trash.'},
+            status=status.HTTP_200_OK
+        )
+
+# List user's trashed books
+class BookTrashListAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        queryset = Book.objects.filter(
+            user=request.user,
+            deleted_at__isnull=False
+        ).order_by('-deleted_at')
+        serializer = BookSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# Restore a trashed book
+class BookRestoreAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            book = Book.objects.get(pk=pk, user=request.user, deleted_at__isnull=False)
+        except Book.DoesNotExist:
+            return Response({'error': 'Book not found in trash.'}, status=status.HTTP_404_NOT_FOUND)
+        book.restore()
+        return Response({'message': 'Book restored successfully.'}, status=status.HTTP_200_OK)
+
+# Permanently delete a trashed book
+class BookPermanentDeleteAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, pk):
+        try:
+            book = Book.objects.get(pk=pk, user=request.user, deleted_at__isnull=False)
+        except Book.DoesNotExist:
+            return Response({'error': 'Book not found in trash.'}, status=status.HTTP_404_NOT_FOUND)
         
         if book.image:
             book.image.delete(save=False)
         book.delete()
-        return Response(
-            {'message': 'Book deleted successfully.'},
-            status=status.HTTP_204_NO_CONTENT
-        )
+        return Response({'message': 'Book permanently deleted.'}, status=status.HTTP_204_NO_CONTENT)
+    
 
 # List all categories (for dropdownin frontend)
 class CategoryListAPIView(APIView):

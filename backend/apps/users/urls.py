@@ -16,6 +16,7 @@ urlpatterns = [
     path('mfa/login-verify/', views.MFALoginVerifyView.as_view(), name='mfa-login-verify'),
     path('mfa/disable/', views.MFADisableView.as_view(), name='mfa-disable'),
     path('mfa/status/', views.MFAStatusView.as_view(), name='mfa-status'),
+    path("me/", views.MeView.as_view(),name='me'),
 
 
 
