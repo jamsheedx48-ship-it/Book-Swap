@@ -337,27 +337,26 @@ class ResetPasswordView(APIView):
         return Response({'message': 'Password reset successfully'}, status=status.HTTP_200_OK)
 
 
-@extend_schema(request=None)
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-@authentication_classes([SessionAuthentication])
-def google_jwt_redirect(request):
-    user = request.user
+# @extend_schema(request=None)
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# @authentication_classes([SessionAuthentication])
+# def google_jwt_redirect(request):
+#     user = request.user
+#     if not user.is_active:
+#         return Response({'error': 'Account is disabled'}, status=status.HTTP_403_FORBIDDEN)
 
-    if not user.is_active:
-        return Response({'error': 'Account is disabled'}, status=status.HTTP_403_FORBIDDEN)
-
-    created = not bool(user.name)
-    if not user.name:
-        user.name = user.email.split('@')[0]
-        user.save()
-    refresh = RefreshToken.for_user(user)
-    return Response({
-        'access': str(refresh.access_token),
-        'refresh': str(refresh),
-        'user': user.email,
-        'created': created
-    })
+#     created = not bool(user.name)
+#     if not user.name:
+#         user.name = user.email.split('@')[0]
+#         user.save()
+#     refresh = RefreshToken.for_user(user)
+#     return Response({
+#         'access': str(refresh.access_token),
+#         'refresh': str(refresh),
+#         'user': user.email,
+#         'created': created
+#     })
 
 
 class MFASetupView(APIView):
@@ -494,10 +493,21 @@ class MFAStatusView(APIView):
 
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
-
+    throttle_classes=[]
     def get(self, request):
         return Response({
             "id": request.user.id,
             "name": request.user.name,
             "email": request.user.email,
         })
+    
+class UpdateFCMTokenView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        fcm_token = request.data.get("fcm_token")
+        if not fcm_token:
+            return Response({"error": "fcm_token is required."}, status=400)
+        request.user.fcm_token = fcm_token
+        request.user.save(update_fields=["fcm_token"])
+        return Response({"detail": "FCM token updated."})        

@@ -3,3 +3,11 @@ uvicorn[standard]==0.29.0
 pydantic==2.7.1
 httpx==0.27.0
 python-dotenv==1.0.1
+langchain
+langchain-community
+langchain-text-splitters
+langchain-groq
+qdrant-client
+langchain-qdrant
+google-genai
+groq

@@ -7,6 +7,7 @@ urlpatterns = [
     path('trash/', views.BookTrashListAPIView.as_view(), name='book-trash-list'),
     path('trash/<int:pk>/restore/', views.BookRestoreAPIView.as_view(), name='book-restore'),
     path('trash/<int:pk>/delete/', views.BookPermanentDeleteAPIView.as_view(), name='book-permanent-delete'),
+    path("my-books/", views.MyBooksView.as_view(), name="my-books"),
 
 
 ]

@@ -41,6 +41,9 @@ class User(AbstractBaseUser,PermissionsMixin):
     mfa_enabled=models.BooleanField(default=False)
     mfa_secret=EncryptedCharField(max_length=255, null=True, blank=True)
 
+    #firebase push noti
+    fcm_token = models.CharField(max_length=255, blank=True, null=True)
+    
     objects=UserManager()
 
     USERNAME_FIELD = "email"

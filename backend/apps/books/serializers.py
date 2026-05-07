@@ -9,14 +9,16 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class BookSerializer(serializers.ModelSerializer):
     user=serializers.StringRelatedField(read_only=True)
+    user_id=serializers.IntegerField(source='user.id',read_only=True)
     category_detail=CategorySerializer(source='category',read_only=True)
     class Meta:
         model=Book
         fields=[
-            'id','user',
+            'id','user','user_id',
             'title','author',
             'category','category_detail',
             'condition','description',
-            'image','created_at'
+            'long_description',
+            'image','image_thumbnail', 'image_detail','created_at'
         ]
-        read_only_fields = ['id', 'user', 'created_at']
+        read_only_fields = ['id', 'user','user_id', 'created_at', 'image_thumbnail', 'image_detail','long_description']

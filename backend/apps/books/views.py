@@ -6,11 +6,13 @@ from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from .models import Book, Category
 from .serializers import BookSerializer, CategorySerializer
-from .tasks import process_book_image
+from .tasks import process_book_image,enrich_book_description_task,ingest_book_to_qdrant
+from django.db import transaction
+
 # Create your views here.
 
 class BookPagination(PageNumberPagination):
-    page_size = 2
+    page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 50
 
@@ -53,9 +55,19 @@ class BookListCreateAPIView(APIView):
     def post(self,request):
         serializer=BookSerializer(data=request.data)
         if serializer.is_valid():
-            book=serializer.save(user=request.user)
-            if book.image:
-                process_book_image.delay(book.image.name)
+            with transaction.atomic():
+                book=serializer.save(user=request.user)
+
+                def trigger_tasks():
+                    # image processing task
+                    if book.image:
+                        process_book_image.delay(book.id,book.image.name)
+            
+                    # long description enrichment task
+                    enrich_book_description_task.delay(book.id)
+
+                #only after full comit run celery tasks    
+                transaction.on_commit(trigger_tasks)
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     
@@ -172,3 +184,12 @@ class CategoryListAPIView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class MyBooksView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        books = Book.objects.filter(user=request.user)
+        serializer = BookSerializer(books, many=True)
+        return Response(serializer.data)

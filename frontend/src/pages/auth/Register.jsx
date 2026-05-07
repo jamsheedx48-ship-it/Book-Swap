@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../../api/auth";
 import { toast } from "react-toastify";
+import GoogleAuthButton from "../../components/GoogleAuthButton";
 
 const Register = () => {
     const [form, setForm] = useState({
@@ -92,7 +93,7 @@ const Register = () => {
 
                 <h1 className="text-3xl font-bold text-persian mb-2">Create account</h1>
                 <p className="text-gray-500 mb-6">Start your journey with us</p>
-
+                 <GoogleAuthButton text="Sign up with Google" />
                 
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
