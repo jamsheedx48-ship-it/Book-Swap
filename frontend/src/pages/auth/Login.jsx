@@ -32,8 +32,10 @@ const Login = () => {
   const saveFCMToken = async () => {
     try {
       const token = await requestFCMToken();
+      console.log("FCM token result:", token);
       if (token) {
         await updateFCMToken(token);
+        console.log("FCM token saved");
       }
     } catch (err) {
       console.error("FCM token save failed:", err);

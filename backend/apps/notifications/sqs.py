@@ -10,6 +10,7 @@ QUEUE_URL = settings.SQS_NOTIFICATION_QUEUE_URL
 
 
 def send_notification(notification_type: str, fcm_token: str, payload: dict):
+    print(f"DEBUG: send_notification called - type={notification_type} token={fcm_token}")
     if not fcm_token:
         logger.warning(f"No FCM token for notification type: {notification_type}")
         return
