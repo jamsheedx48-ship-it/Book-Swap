@@ -14,6 +14,7 @@ const messaging = getMessaging(app);
 
 export const requestFCMToken = async () => {
   try {
+    console.log("Requesting FCM token...");
     const token = await getToken(messaging, {
       vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,  // from Firebase Console
     });

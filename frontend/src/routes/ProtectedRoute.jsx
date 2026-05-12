@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import API from "../api/auth";
+import { getMe } from "../api/auth";
 
 export default function ProtectedRoute({ children }) {
   const [loading, setLoading] = useState(true);
@@ -9,7 +9,7 @@ export default function ProtectedRoute({ children }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await API.get("/me/"); // your logged-in user API
+        await getMe();
         setAuthenticated(true);
       } catch (error) {
         setAuthenticated(false);
@@ -24,9 +24,7 @@ export default function ProtectedRoute({ children }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F6F7FF]">
-        <p className="text-[#26187D] font-medium">
-          Checking authentication...
-        </p>
+        <p className="text-[#26187D] font-medium">Checking authentication...</p>
       </div>
     );
   }

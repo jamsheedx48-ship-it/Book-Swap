@@ -7,6 +7,7 @@ class Exchange(models.Model):
         ACCEPTED = "accepted", "Accepted"
         REJECTED = "rejected", "Rejected"
         COMPLETED = "completed", "Completed"
+        CANCELLED = "cancelled", "Cancelled"
     # user who initiates the exchange
     requester = models.ForeignKey(
         settings.AUTH_USER_MODEL,

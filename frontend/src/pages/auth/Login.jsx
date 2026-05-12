@@ -1,15 +1,30 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginUser, resendOTP, updateFCMToken } from "../../api/auth";
 import { toast } from "react-toastify";
 import GoogleAuthButton from "../../components/GoogleAuthButton";
 import { requestFCMToken } from "../../firebase";
+import { getMe } from "../../api/auth";
 
 const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAlreadyLoggedIn = async () => {
+      try {
+        await getMe();
+        navigate("/browse-books", { replace: true });
+      } catch {
+        // not logged in → stay
+        console.log("not logged in:", err.response?.status);
+      }
+    };
+    checkAlreadyLoggedIn();
+  }, []);
+
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -65,7 +80,7 @@ const Login = () => {
       await saveFCMToken();
       // success
       toast.success(`Welcome back, ${data.name}!`);
-      navigate("/dashboard");
+      navigate("/browse-books");
     } catch (err) {
       const data = err.response?.data;
 

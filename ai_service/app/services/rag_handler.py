@@ -18,7 +18,7 @@ client_gemini = genai.Client(
 qdrant = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 groq_client = Groq(api_key=GROQ_API_KEY)
 
-
+#chunking
 def split_text(text: str, chunk_size: int = 500, chunk_overlap: int = 50) -> list[str]:
     chunks = []
     start = 0
@@ -65,13 +65,17 @@ def ingest_book(book_id: int, title: str, author: str, text: str):
     return len(points)
 
 
-def ask_book(book_id: int, question: str) -> str:
-    result = client_gemini.models.embed_content(
-    model="gemini-embedding-001",
-    contents=question,
-    config=types.EmbedContentConfig(output_dimensionality=768)
-    )
+def ask_book(book_id: int, question: str, user_id: str, book_title: str) -> str:
+    from app.services.dynamo_handler import save_message
 
+    # save user question
+    save_message(user_id, book_id, book_title, "user", question)
+
+    result = client_gemini.models.embed_content(
+        model="gemini-embedding-001",
+        contents=question,
+        config=types.EmbedContentConfig(output_dimensionality=768)
+    )
     question_vector = result.embeddings[0].values
 
     results = qdrant.query_points(
@@ -84,7 +88,9 @@ def ask_book(book_id: int, question: str) -> str:
     ).points
 
     if not results:
-        return "No relevant content found for this book."
+        answer = "No relevant content found for this book."
+        save_message(user_id, book_id, book_title, "assistant", answer)
+        return answer
 
     context = "\n\n".join([r.payload["chunk"] for r in results])
 
@@ -102,4 +108,6 @@ def ask_book(book_id: int, question: str) -> str:
         ],
     )
 
-    return response.choices[0].message.content
+    answer = response.choices[0].message.content
+    save_message(user_id, book_id, book_title, "assistant", answer)
+    return answer

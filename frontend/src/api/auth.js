@@ -1,18 +1,19 @@
-import axios from "axios"
+import api from "./axiosInstance";
 
-const API= axios.create({
-    baseURL:"http://localhost/api/users",
-    withCredentials:true,
-});
+export const loginUser = (data) => api.post("users/login/", data);
+export const registerUser = (data) => api.post("users/register/", data);
+export const verifyOTP = (data) => api.post("users/verify-otp/", data);
+export const resendOTP = (data) => api.post("users/resend-otp/", data);
+export const forgotPassword = (data) => api.post("users/forgot-password/", data);
+export const resetPassword = (data) => api.post("users/reset-password/", data);
 
-export const loginUser = (data)=> API.post("/login/",data);
-export const registerUser = (data)=> API.post("/register/",data);
-export const verifyOTP = (data)=> API.post("/verify-otp/",data);
-export const resendOTP = (data)=> API.post("/resend-otp/",data)
-export const forgotPassword = (data) => API.post("/forgot-password/", data);
-export const resetPassword = (data) => API.post("/reset-password/", data);
-export const mfaLoginVerify = (data) => API.post("/mfa/login-verify/", data);
-export const getMe = () => API.get("/me/");
-export const logoutUser = () => API.post("/logout/");
-export const updateFCMToken =(fcm_token)=>API.patch("/fcm-token/",{fcm_token});
-export default API;
+// mfa
+export const mfaLoginVerify = (data) => api.post("users/mfa/login-verify/", data);
+export const getMFAStatus = () => api.get("users/mfa/status/");
+export const setupMFA = () => api.post("users/mfa/setup/");
+export const verifyMFASetup = (data) => api.post("users/mfa/verify-setup/", data);
+export const disableMFA = (data) => api.post("users/mfa/disable/", data);
+
+export const getMe = () => api.get("users/me/");
+export const logoutUser = () => api.post("users/logout/");
+export const updateFCMToken = (fcm_token) => api.patch("users/fcm-token/", { fcm_token });

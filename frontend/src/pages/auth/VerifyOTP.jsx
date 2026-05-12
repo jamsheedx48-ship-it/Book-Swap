@@ -42,8 +42,8 @@ const VerifyOTP = () => {
         setError("");
         try {
             await verifyOTP({ email, code });
-            toast.success("Email verified! You can now log in.");
-            navigate("/login");
+            toast.success("Email verified!");
+            navigate("/browse-books", { replace: true });
         } catch (err) {
             const data = err.response?.data;
             setError(data?.error || "Verification failed. Try again.");

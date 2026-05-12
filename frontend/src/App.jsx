@@ -15,6 +15,8 @@ import BookDetail from "./pages/books/BookDetail";
 import OAuthCallback from "./pages/auth/OAuthCallback";
 import MyExchanges from "./pages/exchanges/MyExchanges";
 import MyListings from "./pages/books/MyListings";
+import MFASettings from "./pages/mfa/MFASettings";
+import TrashBooks from "./pages/books/TrashBooks";
 
 import { requestFCMToken } from "./firebase";
 import { useEffect } from "react";
@@ -25,6 +27,7 @@ export default function App(){
   return (
     <BrowserRouter>
      <Routes>
+       <Route path="/" element={<Dashboard/>}/>
         {/* auth */}
        <Route path="/register" element={<Register/>}/>
        <Route path="/login" element={<Login/>}/>
@@ -47,8 +50,10 @@ export default function App(){
        <Route path="/books/:id" element={<BookDetail />} />
 
        <Route path="/exchanges" element={<ProtectedRoute><MyExchanges/></ProtectedRoute>}/>
-
-
+       
+       <Route path="/profile/security/mfa" element={<MFASettings/>} />
+       
+       <Route path="/trash-books" element={<TrashBooks/>} />
 
      </Routes>
     </BrowserRouter>

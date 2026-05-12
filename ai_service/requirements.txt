@@ -9,5 +9,6 @@ langchain-text-splitters
 langchain-groq
 qdrant-client
 langchain-qdrant
-google-genai
+google-genai 
 groq
+boto3

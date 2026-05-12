@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authentication import SessionAuthentication
+from apps.utils.n8n import send_email_via_n8n
 from .serializers import (
     RegisterSerializer, LoginSerializer, LogoutSerializer,
     SendOTPSerializer, VerifyOTPSerializer, ResendOTPSerializer,
@@ -48,6 +49,15 @@ class RegisterView(APIView):
             message=f'Your OTP is: {code}\nValid for 5 minutes.',
             from_email=None,
             recipient_list=[user.email],
+        )
+
+        send_email_via_n8n(
+            to_email=user.email,
+            subject="Welcome to Book Swap!",
+            html="""
+                <h2>Welcome to Book Swap!</h2>
+                <p>We're glad to have you. Start swapping books today.</p>
+            """
         )
 
         return Response(
@@ -145,6 +155,9 @@ class LogoutView(APIView):
             token.blacklist()
         except TokenError:
             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        request.user.fcm_token = None
+        request.user.save(update_fields=["fcm_token"])
         
         response=Response({"message": "Logged out successfully"}, status=status.HTTP_205_RESET_CONTENT)
         response.delete_cookie('access_token',samesite='Lax')

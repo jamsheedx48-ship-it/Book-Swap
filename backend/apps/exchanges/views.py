@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework import status
-
+from apps.utils.n8n import send_email_via_n8n
 from .models import Exchange
 from .serializers import ExchangeCreateSerializer, ExchangeSerializer
 from apps.notifications.sqs import send_notification
@@ -70,6 +70,17 @@ class ExchangeActionView(APIView):
                 }
             )
 
+            send_email_via_n8n(
+                to_email=exchange.requester.email,
+                subject="Your swap request was accepted!",
+                html=f"""
+                    <h2>Great news!</h2>
+                    <p><strong>{exchange.receiver.name}</strong> accepted your swap request for
+                    <strong>{exchange.requested_book.title}</strong>.</p>
+                    <p>Log in to Book Swap to proceed with the exchange.</p>
+                """
+            )
+
         elif action == "reject":
             if exchange.receiver != user:
                 raise PermissionDenied("Only the receiver can reject.")
@@ -87,12 +98,51 @@ class ExchangeActionView(APIView):
                 }
             )
 
+            send_email_via_n8n(
+                to_email=exchange.requester.email,
+                subject="Your swap request was declined",
+                html=f"""
+                    <h2>Swap Request Declined</h2>
+                    <p>Unfortunately, <strong>{exchange.receiver.name}</strong> declined your swap request for
+                    <strong>{exchange.requested_book.title}</strong>.</p>
+                    <p>Don't worry — there are more books available on Book Swap!</p>
+                """
+    )
+
         elif action == "complete":
             if user not in (exchange.requester, exchange.receiver):
                 raise PermissionDenied("You are not part of this exchange.")
             if exchange.status != Exchange.Status.ACCEPTED:
                 raise ValidationError("Only accepted exchanges can be completed.")
             exchange.status = Exchange.Status.COMPLETED
+
+            send_email_via_n8n(
+                to_email=exchange.requester.email,
+                subject="Swap completed!",
+                html=f"""
+                     <h2>Swap Completed 🎉</h2>
+                     <p>Your exchange of <strong>{exchange.offered_book.title}</strong> for
+                     <strong>{exchange.requested_book.title}</strong> is now complete.</p>
+                     <p>Thanks for using Book Swap!</p>
+                """
+            )
+            send_email_via_n8n(
+                to_email=exchange.receiver.email,
+                subject="Swap completed!",
+                html=f"""
+                     <h2>Swap Completed 🎉</h2>
+                     <p>Your exchange of <strong>{exchange.requested_book.title}</strong> for
+                     <strong>{exchange.offered_book.title}</strong> is now complete.</p>
+                     <p>Thanks for using Book Swap!</p>
+                """
+            )
+        
+        elif action == "cancel":
+            if exchange.requester!=user:
+                raise PermissionDenied("Only the requester can cancel.")
+            if exchange.status!= Exchange.Status.PENDING:
+                raise ValidationError("Only pending exchanges can be cancelled.")
+            exchange.status = Exchange.Status.CANCELLED
 
         else:
             raise ValidationError("Invalid action. Use accept, reject, or complete.")

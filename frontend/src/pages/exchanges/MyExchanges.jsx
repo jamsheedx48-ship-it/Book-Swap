@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getMyExchanges, exchangeAction } from "../../api/exchange";
 import { getMe } from "../../api/auth";
+import { startConversation } from "../../api/chat";
 
 export default function MyExchanges() {
   const [user, setUser] = useState(null);
@@ -9,6 +11,7 @@ export default function MyExchanges() {
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState("");
   const [activeTab, setActiveTab] = useState("received");
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
@@ -18,12 +21,10 @@ export default function MyExchanges() {
     try {
       setLoading(true);
       setError("");
-
       const [userRes, exchangeRes] = await Promise.all([
         getMe(),
         getMyExchanges(),
       ]);
-
       setUser(userRes.data);
       setExchanges(exchangeRes.data);
     } catch (err) {
@@ -38,7 +39,6 @@ export default function MyExchanges() {
     try {
       setActionLoading(`${exchangeId}-${action}`);
       setError("");
-
       await exchangeAction(exchangeId, action);
       await fetchData();
     } catch (err) {
@@ -49,14 +49,27 @@ export default function MyExchanges() {
     }
   };
 
+  const handleMessage = async (exchange) => {
+    try {
+      // if i'm the receiver, message the requester. if i'm the requester, message the receiver.
+      const otherUserId =
+        user?.id === exchange.receiver_id
+          ? exchange.requester_id
+          : exchange.receiver_id;
+      const res = await startConversation(otherUserId);
+      navigate(`/chat/${res.data.conversation_id}`);
+    } catch (err) {
+      console.error(err);
+      setError("Could not start conversation.");
+    }
+  };
+
   const sentExchanges = exchanges.filter(
-    (exchange) => exchange.requester_id === user?.id
+    (exchange) => exchange.requester_id === user?.id,
   );
-
   const receivedExchanges = exchanges.filter(
-    (exchange) => exchange.receiver_id === user?.id
+    (exchange) => exchange.receiver_id === user?.id,
   );
-
   const currentList =
     activeTab === "received" ? receivedExchanges : sentExchanges;
 
@@ -65,6 +78,7 @@ export default function MyExchanges() {
     accepted: "bg-green-100 text-green-700",
     rejected: "bg-red-100 text-red-700",
     completed: "bg-blue-100 text-blue-700",
+    cancelled: "bg-gray-100 text-gray-500",
   };
 
   if (loading) {
@@ -83,13 +97,8 @@ export default function MyExchanges() {
   return (
     <div className="min-h-screen bg-[#F6F7FF] px-6 md:px-10 py-10">
       <div className="max-w-6xl mx-auto">
-        
-        {/* Header */}
-        <h1 className="text-4xl font-bold text-[#26187D] mb-8">
-          My Exchanges
-        </h1>
+        <h1 className="text-4xl font-bold text-[#26187D] mb-8">My Exchanges</h1>
 
-        {/* Error */}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-5 py-4 rounded-2xl text-base">
             {error}
@@ -108,7 +117,6 @@ export default function MyExchanges() {
           >
             Received ({receivedExchanges.length})
           </button>
-
           <button
             onClick={() => setActiveTab("sent")}
             className={`px-6 py-3 rounded-xl text-base font-medium transition ${
@@ -125,11 +133,9 @@ export default function MyExchanges() {
         {currentList.length === 0 ? (
           <div className="bg-white rounded-2xl p-14 text-center shadow-sm">
             <div className="text-6xl mb-4">📚</div>
-
             <h3 className="text-2xl font-semibold text-gray-700 mb-2">
               No {activeTab} exchanges
             </h3>
-
             <p className="text-gray-500 text-base">
               Your {activeTab} exchange requests will appear here.
             </p>
@@ -143,7 +149,6 @@ export default function MyExchanges() {
               >
                 {/* Book Section */}
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-5">
-                  
                   <div className="flex items-center gap-6 flex-wrap">
                     <div>
                       <p className="text-sm text-gray-400 mb-1">
@@ -151,28 +156,22 @@ export default function MyExchanges() {
                           ? "Offered Book"
                           : "You Offered"}
                       </p>
-
                       <p className="font-semibold text-lg text-black">
                         {exchange.offered_book}
                       </p>
                     </div>
-
                     <span className="text-gray-400 text-2xl">⇄</span>
-
                     <div>
                       <p className="text-sm text-gray-400 mb-1">
                         {activeTab === "received"
                           ? "Your Book"
                           : "Requested Book"}
                       </p>
-
                       <p className="font-semibold text-lg text-[#26187D]">
                         {exchange.requested_book}
                       </p>
                     </div>
                   </div>
-
-                  {/* Status Badge */}
                   <span
                     className={`px-4 py-2 rounded-full text-sm font-semibold capitalize ${
                       statusStyles[exchange.status]
@@ -204,56 +203,59 @@ export default function MyExchanges() {
                     exchange.status === "pending" && (
                       <>
                         <button
-                          onClick={() =>
-                            handleAction(exchange.id, "accept")
-                          }
-                          disabled={
-                            actionLoading ===
-                            `${exchange.id}-accept`
-                          }
+                          onClick={() => handleAction(exchange.id, "accept")}
+                          disabled={actionLoading === `${exchange.id}-accept`}
                           className="px-5 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl text-base font-medium disabled:opacity-50"
                         >
-                          {actionLoading ===
-                          `${exchange.id}-accept`
+                          {actionLoading === `${exchange.id}-accept`
                             ? "Accepting..."
                             : "Accept"}
                         </button>
-
                         <button
-                          onClick={() =>
-                            handleAction(exchange.id, "reject")
-                          }
-                          disabled={
-                            actionLoading ===
-                            `${exchange.id}-reject`
-                          }
+                          onClick={() => handleAction(exchange.id, "reject")}
+                          disabled={actionLoading === `${exchange.id}-reject`}
                           className="px-5 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl text-base font-medium disabled:opacity-50"
                         >
-                          {actionLoading ===
-                          `${exchange.id}-reject`
+                          {actionLoading === `${exchange.id}-reject`
                             ? "Rejecting..."
                             : "Reject"}
                         </button>
                       </>
                     )}
-
-                  {exchange.status === "accepted" && (
+                  {activeTab === "sent" && exchange.status === "pending" && (
                     <button
-                      onClick={() =>
-                        handleAction(exchange.id, "complete")
-                      }
-                      disabled={
-                        actionLoading ===
-                        `${exchange.id}-complete`
-                      }
-                      className="px-5 py-3 bg-[#26187D] hover:bg-[#1c125e] text-white rounded-xl text-base font-medium disabled:opacity-50"
+                      onClick={() => handleAction(exchange.id, "cancel")}
+                      disabled={actionLoading === `${exchange.id}-cancel`}
+                      className="px-5 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl text-base font-medium disabled:opacity-50"
                     >
-                      {actionLoading ===
-                      `${exchange.id}-complete`
-                        ? "Completing..."
-                        : "Mark as Completed"}
+                      {actionLoading === `${exchange.id}-cancel`
+                        ? "Cancelling..."
+                        : "Cancel Request"}
                     </button>
                   )}
+
+                  {exchange.status === "accepted" && (
+                    <>
+                      <button
+                        onClick={() => handleAction(exchange.id, "complete")}
+                        disabled={actionLoading === `${exchange.id}-complete`}
+                        className="px-5 py-3 bg-[#26187D] hover:bg-[#1c125e] text-white rounded-xl text-base font-medium disabled:opacity-50"
+                      >
+                        {actionLoading === `${exchange.id}-complete`
+                          ? "Completing..."
+                          : "Mark as Completed"}
+                      </button>
+                    </>
+                  )}
+                  <>
+                    {/* Message button  */}
+                    <button
+                      onClick={() => handleMessage(exchange)}
+                      className="px-5 py-3 bg-white border border-[#26187D] text-[#26187D] hover:bg-[#26187D] hover:text-white rounded-xl text-base font-medium transition"
+                    >
+                      Message
+                    </button>
+                  </>
                 </div>
               </div>
             ))}

@@ -1,10 +1,5 @@
-import axios from "axios";
+import api from "./axiosInstance";
 
-const API = axios.create({
-    baseURL: "http://localhost/api/chat",
-    withCredentials: true,
-});
-
-export const getConversations = () => API.get("/conversations/");
-export const startConversation = (userId) => API.post("conversations/start/", { user_id: userId });
-export const getMessages = (conversationId) => API.get(`/conversations/${conversationId}/messages/`);
+export const getConversations = () => api.get("chat/conversations/");
+export const startConversation = (userId) => api.post("chat/conversations/start/", { user_id: userId });
+export const getMessages = (conversationId) => api.get(`chat/conversations/${conversationId}/messages/`);

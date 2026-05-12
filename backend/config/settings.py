@@ -61,7 +61,8 @@ INSTALLED_APPS = [
     'apps.chat',
     'django_celery_results',
     'django_celery_beat',
-    'apps.notifications'
+    'apps.notifications',
+    'profiles',
 ]
 
 # Channels config
@@ -292,3 +293,5 @@ CELERY_BEAT_SCHEDULE = {
 
 SQS_NOTIFICATION_QUEUE_URL=os.getenv("SQS_NOTIFICATION_QUEUE_URL")
 AWS_REGION=os.getenv("AWS_REGION")
+
+N8N_EMAIL_WEBHOOK_URL = os.getenv("N8N_EMAIL_WEBHOOK_URL")

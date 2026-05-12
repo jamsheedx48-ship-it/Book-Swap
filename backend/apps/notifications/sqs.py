@@ -27,4 +27,5 @@ def send_notification(notification_type: str, fcm_token: str, payload: dict):
         )
         logger.info(f"SQS message sent: {notification_type}")
     except Exception as e:
+        print(f"SQS ERROR: {e}")
         logger.error(f"SQS send failed: {e}")

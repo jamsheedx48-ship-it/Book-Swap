@@ -1,23 +1,9 @@
-import axios from "axios";
+import api from "./axiosInstance";
 
-const API = axios.create({
-  baseURL: "http://localhost/api/exchanges",
-  withCredentials: true,
-});
+export const createExchangeRequest = (data) => api.post("exchanges/request/", data);
 
-export const createExchangeRequest = (data) => {
-  return API.post("/request/", data);
-};
+export const getMyExchanges = () => api.get("exchanges/");
 
-export const getMyExchanges = () => {
-  return API.get("");
-};
+export const exchangeAction = (id, action) => api.post(`exchanges/${id}/${action}/`);
 
-export const exchangeAction = (id, action) => {
-  return API.post(`/${id}/${action}/`);
-};
-
-// check book has penidng req
-export const checkPendingExchange = (bookId) => {
-  return API.get(`/check-pending/${bookId}/`)
-}
+export const checkPendingExchange = (bookId) => api.get(`exchanges/check-pending/${bookId}/`);
