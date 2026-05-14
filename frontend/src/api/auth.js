@@ -17,3 +17,4 @@ export const disableMFA = (data) => api.post("users/mfa/disable/", data);
 export const getMe = () => api.get("users/me/");
 export const logoutUser = () => api.post("users/logout/");
 export const updateFCMToken = (fcm_token) => api.patch("users/fcm-token/", { fcm_token });
+

@@ -7,9 +7,10 @@ from .serializers import (
     SendOTPSerializer, VerifyOTPSerializer, ResendOTPSerializer,
     ForgotPasswordSerializer, ResetPasswordSerializer,
     MFAVerifySetupSerializer, MFALoginVerifySerializer,
-    MFADisableSerializer, MFAStatusSerializer
+    MFADisableSerializer, MFAStatusSerializer,ChangePasswordSerializer
 )
 from rest_framework.response import Response
+from django.contrib.auth.hashers import check_password
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from .throttles import LoginThrottle, RegisterThrottle, OTPSendThrottle, OTPVerifyThrottle
@@ -523,4 +524,23 @@ class UpdateFCMTokenView(APIView):
             return Response({"error": "fcm_token is required."}, status=400)
         request.user.fcm_token = fcm_token
         request.user.save(update_fields=["fcm_token"])
-        return Response({"detail": "FCM token updated."})        
+        return Response({"detail": "FCM token updated."}) 
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+
+        if not check_password(serializer.validated_data['old_password'], user.password):
+            return Response({'error': 'Old password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(serializer.validated_data['new_password'])
+        user.save()
+
+        return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)

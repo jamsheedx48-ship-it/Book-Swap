@@ -34,3 +34,6 @@ export const getTrashBooks = () => api.get("books/trash/");
 export const restoreBook = (id) => api.post(`books/trash/${id}/restore/`);
 
 export const permanentlyDeleteBook = (id) => api.delete(`books/trash/${id}/delete/`);
+
+// Get AI book recommendations
+export const getRecommendations = () => api.get("recommendations/");

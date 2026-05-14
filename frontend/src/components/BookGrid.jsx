@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { getBooks, getCategories } from "../api/books";
 import { toast } from "react-toastify";
+import BookRecommendations from "./BookRecommendations";
 
 export default function BookGrid() {
   const [books, setBooks] = useState([]);
@@ -162,6 +163,13 @@ export default function BookGrid() {
             </div>
           </div>
         </div>
+
+        {/* AI Recommendations */}
+        <div className="mb-10">
+          <BookRecommendations />
+        </div>
+
+        {/* Dynamic Content Area */}
 
         {/* Dynamic Content Area */}
         {loading ? (

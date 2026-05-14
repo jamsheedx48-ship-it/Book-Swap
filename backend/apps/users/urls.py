@@ -18,6 +18,8 @@ urlpatterns = [
     path('mfa/status/', views.MFAStatusView.as_view(), name='mfa-status'),
     path("me/", views.MeView.as_view(),name='me'),
     path("fcm-token/", views.UpdateFCMTokenView.as_view(), name="update-fcm-token"),
+    path('change-password/', views.ChangePasswordView.as_view(), name='change-password'),
+
 
 
 

@@ -111,61 +111,68 @@ export default function MyListings() {
         </div>
 
         {/* Listings Grid */}
-        {books.length === 0 ? (
-          <div className="bg-white/60 backdrop-blur-sm rounded-[3rem] p-20 text-center border border-white shadow-sm">
-            <PackageOpen className="mx-auto text-gray-200 mb-6" size={80} />
-            <h2 className="text-xl font-bold text-slate-900 mb-2">No active listings</h2>
-            <p className="text-gray-400 font-medium mb-8">Start your first swap by listing a book.</p>
-            <Link to="/list-book" className="text-[#5B4CF0] font-bold text-sm hover:underline tracking-tight">
-              List a Book Now →
-            </Link>
+        {/* Listings Grid */}
+{books.length === 0 ? (
+  <div className="bg-white/60 backdrop-blur-sm rounded-[3rem] p-20 text-center border border-white shadow-sm">
+    <PackageOpen className="mx-auto text-gray-200 mb-6" size={80} />
+    <h2 className="text-xl font-bold text-slate-900 mb-2">No active listings</h2>
+    <p className="text-gray-400 font-medium mb-8">Start your first swap by listing a book.</p>
+    <Link to="/list-book" className="text-[#5B4CF0] font-bold text-sm hover:underline tracking-tight">
+      List a Book Now →
+    </Link>
+  </div>
+) : (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+    {books.map((book) => (
+      <div
+        key={book.id}
+        className="group bg-white rounded-[2.5rem] p-3 border border-white shadow-sm hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] transition-all duration-500"
+      >
+        {/* Wrap only the informational part of the card in a Link */}
+        <Link to={`/books/${book.id}`} className="block">
+          <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem] bg-gray-50">
+            <img
+              src={book.image_thumbnail || book.image || "/placeholder-book.jpg"}
+              alt={book.title}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full shadow-sm">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B4CF0]">
+                {book.condition}
+              </span>
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {books.map((book) => (
-              <div
-                key={book.id}
-                className="group bg-white rounded-[2.5rem] p-3 border border-white shadow-sm hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] transition-all duration-500"
-              >
-                <div className="relative aspect-[3/4] overflow-hidden rounded-[2rem] bg-gray-50">
-                  <img
-                    src={book.image_thumbnail || book.image || "/placeholder-book.jpg"}
-                    alt={book.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full shadow-sm">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#5B4CF0]">
-                      {book.condition}
-                    </span>
-                  </div>
-                </div>
 
-                <div className="px-3 py-5">
-                  <h3 className="text-lg font-bold text-slate-900 line-clamp-1 mb-1 leading-tight group-hover:text-[#26187D] transition-colors">
-                    {book.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm font-bold uppercase tracking-tight mb-4">{book.author}</p>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEditClick(book)}
-                      className="flex-1 bg-gray-50 hover:bg-indigo-50 text-gray-600 hover:text-[#26187D] py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2"
-                    >
-                      <Pencil size={14} />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => setDeleteBookId(book.id)}
-                      className="w-12 h-12 bg-gray-50 hover:bg-rose-50 text-gray-400 hover:text-rose-500 rounded-xl transition-all flex items-center justify-center"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="px-3 pt-5 pb-1">
+            <h3 className="text-lg font-bold text-slate-900 line-clamp-1 mb-1 leading-tight group-hover:text-[#26187D] transition-colors">
+              {book.title}
+            </h3>
+            <p className="text-gray-400 text-sm font-bold uppercase tracking-tight mb-4">{book.author}</p>
           </div>
-        )}
+        </Link>
+
+        {/* Action buttons are kept outside the Link to prevent conflict */}
+        <div className="px-3 pb-4">
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleEditClick(book)}
+              className="flex-1 bg-gray-50 hover:bg-indigo-50 text-gray-600 hover:text-[#26187D] py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2"
+            >
+              <Pencil size={14} />
+              Edit
+            </button>
+            <button
+              onClick={() => setDeleteBookId(book.id)}
+              className="w-12 h-12 bg-gray-50 hover:bg-rose-50 text-gray-400 hover:text-rose-500 rounded-xl transition-all flex items-center justify-center"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
 
         {/* Edit Modal - Ecosystem Glass Style */}
         {editingBook && (

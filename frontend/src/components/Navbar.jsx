@@ -1,27 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  User,
   LogOut,
   PlusCircle,
   MessageSquare,
   Repeat,
   LayoutGrid,
-  Sparkles,
-  BookOpen,
-  Trash,
-  ShieldCheck
+  Sparkles
 } from "lucide-react";
 import { getMe } from "../api/auth";
+import { getMyProfile } from "../api/profile";
 import useLogout from "../hooks/useLogout";
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
+  const [avatarDisplay, setAvatarDisplay] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
 
   const location = useLocation();
   const logout = useLogout();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -29,10 +28,15 @@ export default function Navbar() {
 
     const fetchUser = async () => {
       try {
-        const res = await getMe();
-        setUser(res.data);
+        const [userRes, profileRes] = await Promise.all([
+          getMe(),
+          getMyProfile(),
+        ]);
+        setUser(userRes.data);
+        setAvatarDisplay(profileRes.data.avatar_display);
       } catch (error) {
         setUser(null);
+        setAvatarDisplay(null);
       } finally {
         setLoading(false);
       }
@@ -53,7 +57,8 @@ export default function Navbar() {
       }`}
     >
       <div className="w-full max-w-[1600px] mx-auto flex items-center justify-between">
-        {/* Brand Section */}
+
+        {/* Brand */}
         <div className="flex-shrink-0">
           <Link to="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 bg-[#26187D] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-100 group-hover:rotate-12 transition-transform duration-300">
@@ -116,47 +121,30 @@ export default function Navbar() {
 
               <div className="h-6 w-px bg-gray-200 mx-2 hidden md:block" />
 
-              {/* Profile Dropdown Group */}
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-3 pl-2 group relative py-2">
+                <div className="flex items-center gap-3 pl-2 py-2">
                   <div className="text-right hidden md:block leading-none cursor-default">
                     <p className="text-sm font-bold text-gray-900">
                       {user.name}
                     </p>
                   </div>
 
-                  {/* User Icon Link */}
                   <Link
                     to="/profile"
-                    className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-100 hover:bg-indigo-50 transition-colors"
+                    className="w-10 h-10 rounded-xl overflow-hidden border border-gray-100 hover:border-[#26187D] transition-all"
                   >
-                    <User size={20} className="text-gray-500" />
+                    {avatarDisplay ? (
+                      <img
+                        src={avatarDisplay}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-indigo-50 flex items-center justify-center text-[#26187D] font-bold text-xs">
+                        {user.name?.substring(0, 2).toUpperCase()}
+                      </div>
+                    )}
                   </Link>
-
-                  {/* --- NEW DROPDOWN MENU --- */}
-                  <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all py-2 z-[110]">
-                    <Link
-                      to="/my-listings"
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 hover:text-[#26187D] transition-colors"
-                    >
-                      <BookOpen size={16} />
-                      My Listings
-                    </Link>
-                    {/* Add Security Link  */}
-                    <Link
-                      to="/profile/security/mfa"
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 hover:text-[#26187D]"
-                    >
-                      <ShieldCheck size={16} /> Security Settings
-                    </Link>
-                    <Link
-                      to="/trash-books"
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-400 hover:bg-gray-50 hover:text-red-500 transition-colors"
-                    >
-                      <Trash size={16} />
-                      Trash
-                    </Link>
-                  </div>
                 </div>
 
                 <button

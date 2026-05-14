@@ -20,6 +20,8 @@ import TrashBooks from "./pages/books/TrashBooks";
 
 import { requestFCMToken } from "./firebase";
 import { useEffect } from "react";
+import ProfilePage from "./pages/profile/ProfilePage";
+import SettingsPage from "./pages/profile/SettingsPage";
 export default function App(){
   useEffect(()=>{
     requestFCMToken().then(token=>console.log("TOKEN:", token))
@@ -51,9 +53,14 @@ export default function App(){
 
        <Route path="/exchanges" element={<ProtectedRoute><MyExchanges/></ProtectedRoute>}/>
        
-       <Route path="/profile/security/mfa" element={<MFASettings/>} />
+       <Route path="/settings/security/mfa" element={<MFASettings/>} />
        
        <Route path="/trash-books" element={<TrashBooks/>} />
+
+       {/* Profile */}
+       <Route path="/profile" element={<ProfilePage/>}/>
+       <Route path="/settings" element={<SettingsPage/>}/>
+       
 
      </Routes>
     </BrowserRouter>

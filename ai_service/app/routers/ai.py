@@ -46,6 +46,15 @@ class HistoryResponse(BaseModel):
     messages: list
     status: str
 
+class RecommendRequest(BaseModel):
+    interests: list[str]        # genre display names
+    swapped_books: list[str]    # book titles user offered/requested
+    user_id: str
+
+class RecommendResponse(BaseModel):
+    recommendations: list[dict]
+    status: str
+
 
 @router.post("/process", response_model=AIResponse)
 async def process(request: AIRequest):
@@ -72,3 +81,13 @@ async def ingest(request: IngestRequest):
 async def history(user_id: str, book_id: int):
     messages = get_chat_history(user_id, book_id)
     return HistoryResponse(messages=messages, status="success")
+
+@router.post("/recommend", response_model=RecommendResponse)
+async def recommend(request: RecommendRequest):
+    from app.services.recommend_handler import get_recommendations
+    books = await get_recommendations(
+        interests=request.interests,
+        swapped_books=request.swapped_books,
+        user_id=request.user_id,
+    )
+    return RecommendResponse(recommendations=books, status="success")

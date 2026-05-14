@@ -28,5 +28,7 @@ urlpatterns = [
     path('api/books/', include('apps.books.urls')),
     path("api/chat/", include("apps.chat.urls")),
     path("api/exchanges/", include("apps.exchanges.urls")),
+    path("api/profile/",include("apps.profiles.urls")),
+    path("api/recommendations/",include("apps.recommendations.urls")),
 
 ]   

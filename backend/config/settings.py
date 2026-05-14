@@ -62,7 +62,8 @@ INSTALLED_APPS = [
     'django_celery_results',
     'django_celery_beat',
     'apps.notifications',
-    'profiles',
+    'apps.profiles',
+    'apps.recommendations',
 ]
 
 # Channels config

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Book,Category
-
+from ..profiles.serializers import UserProfilePublicSerializer
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,10 +11,12 @@ class BookSerializer(serializers.ModelSerializer):
     user=serializers.StringRelatedField(read_only=True)
     user_id=serializers.IntegerField(source='user.id',read_only=True)
     category_detail=CategorySerializer(source='category',read_only=True)
+    owner_profile = UserProfilePublicSerializer(source='user.profile', read_only=True)
+
     class Meta:
         model=Book
         fields=[
-            'id','user','user_id',
+            'id','user','user_id','owner_profile',
             'title','author',
             'category','category_detail',
             'condition','description',
