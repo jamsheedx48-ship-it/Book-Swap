@@ -22,12 +22,16 @@ import { requestFCMToken } from "./firebase";
 import { useEffect } from "react";
 import ProfilePage from "./pages/profile/ProfilePage";
 import SettingsPage from "./pages/profile/SettingsPage";
+import NotificationsPage from "./pages/profile/NotificationsPage";
+import { NotificationProvider } from "./context/NotificationContext";
+
 export default function App(){
   useEffect(()=>{
     requestFCMToken().then(token=>console.log("TOKEN:", token))
   },[])
   return (
     <BrowserRouter>
+     <NotificationProvider>
      <Routes>
        <Route path="/" element={<Dashboard/>}/>
         {/* auth */}
@@ -60,9 +64,13 @@ export default function App(){
        {/* Profile */}
        <Route path="/profile" element={<ProfilePage/>}/>
        <Route path="/settings" element={<SettingsPage/>}/>
+
+       <Route path="/notifications" element={<NotificationsPage/>} />
+
        
 
      </Routes>
+     </NotificationProvider>
     </BrowserRouter>
   )
 }

@@ -2,6 +2,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import Conversation, Message
+from apps.notifications.utils import send_realtime_notification
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -12,7 +13,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         
         self.conversation_id = self.scope["url_route"]["kwargs"]["conversation_id"]
         self.room_group_name = f"chat_{self.conversation_id}"
-
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
@@ -27,7 +27,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
             sender = self.scope["user"]
     
             saved = await self.save_message(sender, message)
-    
+
+            # get recipients then notify each one
+            recipients = await self.get_other_participants(sender)
+            for recipient in recipients:
+                await database_sync_to_async(send_realtime_notification)(
+                    recipient=recipient,
+                    notification_type='message',
+                    message=f'New message from {sender.name}: "{message[:50]}"'
+                )
+
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -58,3 +67,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             sender=sender,
             message=message,
         )
+
+    @database_sync_to_async
+    def get_other_participants(self, sender):
+        conversation = Conversation.objects.get(id=self.conversation_id)
+        return list(conversation.participants.exclude(id=sender.id))

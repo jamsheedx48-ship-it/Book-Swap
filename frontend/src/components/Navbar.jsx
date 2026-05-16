@@ -6,17 +6,24 @@ import {
   MessageSquare,
   Repeat,
   LayoutGrid,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
 import { getMe } from "../api/auth";
 import { getMyProfile } from "../api/profile";
 import useLogout from "../hooks/useLogout";
+import NotificationBell from "./NotificationBell";
+import { useNotifications } from "../context/NotificationContext";
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
   const [avatarDisplay, setAvatarDisplay] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  const { notifications } = useNotifications();
+  const messageNotifCount = notifications.filter(
+    (n) => n.notification_type === "message" && !n.is_read
+  ).length;
 
   const location = useLocation();
   const logout = useLogout();
@@ -57,7 +64,6 @@ export default function Navbar() {
       }`}
     >
       <div className="w-full max-w-[1600px] mx-auto flex items-center justify-between">
-
         {/* Brand */}
         <div className="flex-shrink-0">
           <Link to="/" className="flex items-center gap-2 group">
@@ -83,9 +89,10 @@ export default function Navbar() {
             <LayoutGrid size={18} />
             <span>Browse</span>
           </Link>
+
           <Link
             to="/chat"
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+            className={`relative flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${
               isActive("/chat")
                 ? "bg-white text-[#26187D] shadow-sm"
                 : "text-gray-400 hover:text-[#26187D]"
@@ -93,7 +100,13 @@ export default function Navbar() {
           >
             <MessageSquare size={18} />
             <span>Messages</span>
+            {messageNotifCount > 0 && (
+              <span className="bg-[#26187D] text-white text-xs rounded-full w-4 h-4 flex items-center justify-center ml-1">
+                {messageNotifCount}
+              </span>
+            )}
           </Link>
+
           <Link
             to="/exchanges"
             className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${
@@ -124,9 +137,7 @@ export default function Navbar() {
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-3 pl-2 py-2">
                   <div className="text-right hidden md:block leading-none cursor-default">
-                    <p className="text-sm font-bold text-gray-900">
-                      {user.name}
-                    </p>
+                    <p className="text-sm font-bold text-gray-900">{user.name}</p>
                   </div>
 
                   <Link
@@ -146,6 +157,8 @@ export default function Navbar() {
                     )}
                   </Link>
                 </div>
+
+                <NotificationBell />
 
                 <button
                   onClick={logout}

@@ -12,6 +12,7 @@ import {
   BookOpen,
   Star,
   MessageCircle,
+  User,
 } from "lucide-react";
 import BookChat from "../../components/BookChat";
 import ExchangeModal from "../../components/ExchangeModal";
@@ -151,7 +152,8 @@ const BookDetail = () => {
               {book.title}
             </h1>
 
-            <div className="flex items-center gap-4 mb-8">
+            {/* Author and Global Rating Row */}
+            <div className="flex items-center gap-4 mb-4">
               <p className="text-xl font-medium text-gray-400 uppercase tracking-tight">
                 by {book.author}
               </p>
@@ -166,6 +168,17 @@ const BookDetail = () => {
                   </span>
                 </div>
               )}
+            </div>
+
+            {/* NEW: Clean Owner Placement Line */}
+            <div className="flex items-center gap-2 mb-8 text-sm text-gray-500 font-medium">
+              <div className="w-5 h-5 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-100">
+                <User size={11} className="text-[#26187D]" />
+              </div>
+              <span>Listed by:</span>
+              <span className="font-bold text-slate-800 capitalize">
+                {isMyBook ? "You" : book.user || "Community Member"}
+              </span>
             </div>
 
             <div className="flex flex-wrap gap-2 mb-10">
@@ -185,7 +198,7 @@ const BookDetail = () => {
               </p>
             </div>
 
-            {/* Location, Condition, and Date Grid */}
+            {/* Location, Condition, and Date Grid (Reverted back to 3 Columns) */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
               {/* Box 1: Condition */}
               <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">

@@ -4,10 +4,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework import status
 from apps.utils.n8n import send_email_via_n8n
-from .models import Exchange
-from .serializers import ExchangeCreateSerializer, ExchangeSerializer
+from .models import Exchange,MeetupDetail
+from .serializers import ExchangeCreateSerializer, ExchangeSerializer,MeetupSerializer
 from apps.notifications.sqs import send_notification
-
+from ..chat.models import Conversation
+from apps.notifications.utils import send_realtime_notification
 
 #List exchanges
 class ExchangeListView(APIView):
@@ -38,6 +39,17 @@ class ExchangeRequestView(APIView):
                 "exchange_id": str(exchange.id),
             }
         )
+
+        # when user requests a swap
+        try:
+            send_realtime_notification(
+                recipient=exchange.receiver,
+                notification_type='swap_requested',
+                message=f'{exchange.requester.name} wants to swap "{exchange.requested_book.title}" with you.'
+            )
+        except Exception as e:
+            print(f"REALTIME NOTIF ERROR: {e}")
+
         return Response(ExchangeSerializer(exchange).data, status=status.HTTP_201_CREATED)
 
 # Accept / reject / complete exchange
@@ -61,6 +73,11 @@ class ExchangeActionView(APIView):
                 raise ValidationError("Only pending exchanges can be accepted.")
             exchange.status = Exchange.Status.ACCEPTED
 
+            conversation = Conversation.objects.create()
+            conversation.participants.add(exchange.requester, exchange.receiver)
+            exchange.conversation = conversation
+
+
             send_notification(
                 notification_type="REQUEST_ACCEPTED",
                 fcm_token=exchange.requester.fcm_token,
@@ -68,6 +85,12 @@ class ExchangeActionView(APIView):
                     "book_title":exchange.requested_book.title,
                     "exchange_id": str(exchange.id),
                 }
+            )
+
+            send_realtime_notification(
+                recipient=exchange.requester,
+                notification_type='swap_accepted',
+                message=f'{exchange.receiver.name} accepted your swap request for "{exchange.requested_book.title}"!'
             )
 
             send_email_via_n8n(
@@ -96,6 +119,12 @@ class ExchangeActionView(APIView):
                     "book_title": exchange.requested_book.title,
                     "exchange_id": str(exchange.id),
                 }
+            )
+
+            send_realtime_notification(
+                recipient=exchange.requester,
+                notification_type='swap_rejected',
+                message=f'{exchange.receiver.name} declined your swap request for "{exchange.requested_book.title}".'
             )
 
             send_email_via_n8n(
@@ -162,3 +191,58 @@ class CheckPendingExchangeView(APIView):
         ).exists()
         return Response({"has_pending": exists})    
     
+# view meetup details and create meetup details
+class MeetupView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_exchange(self, pk, user):
+        try:
+            exchange = Exchange.objects.get(pk=pk)
+        except Exchange.DoesNotExist:
+            raise ValidationError("Exchange not found.")
+        if user not in (exchange.requester, exchange.receiver):
+            raise PermissionDenied("You are not part of this exchange.")
+        if exchange.status != Exchange.Status.ACCEPTED:
+            raise ValidationError("Exchange must be accepted before setting a meetup.")
+        return exchange
+
+    def get(self, request, pk):
+        exchange = self.get_exchange(pk, request.user)
+        try:
+            serializer = MeetupSerializer(exchange.meetup)
+            return Response(serializer.data)
+        except MeetupDetail.DoesNotExist:
+            return Response({"detail": "No meetup proposed yet."}, status=404)
+
+    def post(self, request, pk):
+        exchange = self.get_exchange(pk, request.user)
+        # Prevent duplicate meetup creation
+        if hasattr(exchange, 'meetup'):
+            raise ValidationError("Meetup already proposed. Use confirm endpoint.")
+        serializer = MeetupSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(exchange=exchange, proposed_by=request.user)
+        return Response(serializer.data, status=201)
+
+# meetup confirmation
+class MeetupConfirmView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            exchange = Exchange.objects.get(pk=pk)
+        except Exchange.DoesNotExist:
+            raise ValidationError("Exchange not found.")
+        if request.user not in (exchange.requester, exchange.receiver):
+            raise PermissionDenied("You are not part of this exchange.")
+        try:
+            meetup = exchange.meetup
+        except MeetupDetail.DoesNotExist:
+            raise ValidationError("No meetup proposed yet.")
+        if meetup.proposed_by == request.user:
+            raise PermissionDenied("You can't confirm your own meetup proposal.")
+        if meetup.confirmed:
+            raise ValidationError("Meetup already confirmed.")
+        meetup.confirmed = True
+        meetup.save()
+        return Response(MeetupSerializer(meetup).data)

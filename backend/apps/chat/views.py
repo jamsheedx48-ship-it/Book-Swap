@@ -41,5 +41,17 @@ class MessageListView(APIView):
 
     def get(self, request, conversation_id):
         messages = Message.objects.filter(conversation_id=conversation_id,conversation__participants=request.user)
+        messages.exclude(sender=request.user).update(is_read=True)
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
+    
+
+# class UnreadMessageCountView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         count = Message.objects.filter(
+#             conversation__participants=request.user,
+#             is_read=False
+#         ).exclude(sender=request.user).count()
+#         return Response({'unread_count': count})
