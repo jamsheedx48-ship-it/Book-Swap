@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'apps.notifications',
     'apps.profiles',
     'apps.recommendations',
+    'apps.agent',
 ]
 
 # Channels config
@@ -296,3 +297,6 @@ SQS_NOTIFICATION_QUEUE_URL=os.getenv("SQS_NOTIFICATION_QUEUE_URL")
 AWS_REGION=os.getenv("AWS_REGION")
 
 N8N_EMAIL_WEBHOOK_URL = os.getenv("N8N_EMAIL_WEBHOOK_URL")
+
+#ai agent 
+AGENT_INTERNAL_SECRET = os.getenv("AGENT_INTERNAL_SECRET")

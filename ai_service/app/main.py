@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import ai
+from app.routers import ai,agent
 
 app = FastAPI(
     title="AI Service",
@@ -8,6 +8,7 @@ app = FastAPI(
 )
 
 app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
+app.include_router(agent.router, prefix="/api/agent", tags=["Agent"])
 
 
 @app.get("/health")

@@ -31,5 +31,6 @@ urlpatterns = [
     path("api/profile/",include("apps.profiles.urls")),
     path("api/recommendations/",include("apps.recommendations.urls")),
     path('api/notifications/', include('apps.notifications.urls')),
+    path("api/agent/", include("apps.agent.urls")),
 
 ]   
